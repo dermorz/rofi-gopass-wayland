@@ -90,7 +90,7 @@ kb_copy_user="Alt+N"
 kb_copy_otp="Alt+O"
 
 kb_insert="Alt+i"
-kb_show="Alt+s"
+kb_show="Alt+Shift+V"
 
 # Actions
 kb_move="Alt+m"
