@@ -61,8 +61,6 @@ gen_lang="en"
 gen_capitalize="true"
 # Include number (for xkcd/memorable generators)
 gen_number="true"
-# Include symbol (for xkcd/memorable generators)
-gen_symbol="true"
 
 ## Misc settings
 
