@@ -45,34 +45,48 @@ users_list="some@mail.com another@gmail.com localuser"
 
 # Password length (for cryptic generator)
 # Default: 20
+# Examples: 16, 20, 30, 50
 # gen_length="20"
 
 # Include symbols in password (for cryptic generator)
 # Default: true
+# Examples: true  -> "Eech4ahRoy2oowi0ohl!"
+#           false -> "Eech4ahRoy2oowi0ohl"
 # gen_symbols="true"
 
 # Number of words (for xkcd/memorable generators)
 # Default: 6
+# Examples: 4, 6, 8
 # gen_word_count="6"
 
 # Word separator (for xkcd/memorable generators)
 # Default: -
+# Examples: "-"   -> "correct-horse-battery-staple"
+#           "."   -> "correct.horse.battery.staple"
+#           "_"   -> "correct_horse_battery_staple"
 # gen_separator="-"
 
 # Language for xkcd/memorable word lists (e.g., en, de, fr, es, etc.)
 # Default: en
+# Examples: en, de, fr, es, it, nl, pt, ru, sv, zh
 # gen_lang="en"
 
 # Capitalize words (for xkcd/memorable generators)
 # Default: true
+# Examples: true  -> "Correct-Horse-Battery-Staple"
+#           false -> "correct-horse-battery-staple"
 # gen_capitalize="true"
 
 # Include number (for xkcd/memorable generators)
 # Default: true
+# Examples: true  -> "correct-horse-battery-staple-42"
+#           false -> "correct-horse-battery-staple"
 # gen_number="true"
 
 # Include symbol (for xkcd/memorable generators)
 # Default: true
+# Examples: true  -> "correct-horse-battery-staple!"
+#           false -> "correct-horse-battery-staple"
 # gen_symbol="true"
 
 ## Misc settings
