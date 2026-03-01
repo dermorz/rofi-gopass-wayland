@@ -90,7 +90,7 @@ kb_copy_user="Alt+N"
 kb_copy_otp="Alt+O"
 
 kb_insert="Alt+i"
-kb_show="Alt+Return"
+kb_show="Alt+s"
 
 # Actions
 kb_move="Alt+m"
@@ -193,8 +193,9 @@ main_menu() {
 
 	# Actions that do need the entry
 	# The exit code for -kb-custom-X is X+9.
+	# Enter (exit code 0) now types password directly for quick access
 	case "${rofi_exit}" in
-		0) entry_menu "$passentry" ;;
+		0) _type "$passentry" pass ;;
 		11) _type "$passentry" menu ;;
 		12) _type "$passentry" pass ;;
 		13) _type "$passentry" user ;;
