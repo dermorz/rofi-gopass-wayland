@@ -104,7 +104,7 @@ kb_switch_root="Alt+bracketleft" # [
 
 # --- Customisable functions ---
 
-_rofi() { rofi -no-auto-select -i -dmenu "$@"; }
+_rofi() { rofi -no-auto-select -i -sorting-method levenshtein -dmenu "$@"; }
 
 _notify() { notify-send -e "rofi-gopass" "$1"; }
 
