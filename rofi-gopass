@@ -154,7 +154,9 @@ main_menu() {
 	)
 
 	local placeholder
-	placeholder=$(wrap_placeholder "Current store: ${GOPASS_DIR:-$PASSWORD_STORE_DIR}")
+	local current_store
+	current_store=$(gopass config mounts.path 2>/dev/null || echo "${GOPASS_DIR:-$PASSWORD_STORE_DIR}")
+	placeholder=$(wrap_placeholder "Current store: $current_store")
 	args+=(-theme-str "$placeholder")
 
 	local passentry
@@ -520,9 +522,6 @@ insert_entry() {
 		rofi_args+=(-mesg "${help_content}")
 	fi
 
-	# needs to be checked here since this f-n may be called directly from 'main'
-	cd "${GOPASS_DIR:-$PASSWORD_STORE_DIR}" || exit
-
 	placeholder=$(wrap_placeholder "Enter name, must be unique ...")
 	path=$(gopassls | _rofi "${rofi_args[@]}")
 	assert_status $?
@@ -733,11 +732,7 @@ get_username() {
 
 # get all password files and output as newline-delimited text
 gopassls() {
-	cd "${GOPASS_DIR:-$PASSWORD_STORE_DIR}" || return 1
-
-	mapfile -d '' pw_list < <(find -L . -name '*.gpg' -print0)
-	pw_list=("${pw_list[@]#./}")
-	printf '%s\n' "${pw_list[@]%.gpg}" | sort | grep -v "^$"
+	gopass ls --flat 2>/dev/null | grep -v '^$' | sort
 	return 0
 }
 
@@ -798,7 +793,7 @@ load_config() {
 populate_roots() {
 	local IFS=:
 
-	# Precedense: flag -> config -> gopass/pass DIR var -> default $HOME/.password-store
+	# Precedense: flag -> config -> gopass/pass DIR var -> gopass config -> default
 	if [[ "$1" == "--root" && -n "$2" ]]; then
 		read -r -a roots <<<"$2"
 	elif [[ -n "$ROOTS" ]]; then # config var
@@ -808,9 +803,14 @@ populate_roots() {
 	elif [[ -n $PASSWORD_STORE_DIR ]]; then
 		roots=("$PASSWORD_STORE_DIR")
 	else
-		# NOTE: need to hardcode at least one default root since we need to cd
-		# somewhere to find all password entries
-		roots=("$HOME/.password-store")
+		# Try to get root from gopass config
+		local gopass_root
+		gopass_root=$(gopass config mounts.path 2>/dev/null)
+		if [[ -n "$gopass_root" ]]; then
+			roots=("$gopass_root")
+		else
+			roots=("$HOME/.local/share/gopass/stores/root")
+		fi
 	fi
 }
 
