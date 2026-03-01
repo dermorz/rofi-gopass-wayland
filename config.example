@@ -1,28 +1,28 @@
 # Config example (also default values)
 
-# Set alternative password store dirs. Use ":" to separate multiple roots.
+# Set alternative gopass store dirs. Use ":" to separate multiple roots.
 # Can be switched at runtime with with corresponding hotkeys
 # ROOTS=/path/to/root_one:/path/to/root_two
 
-# You can define password store env vars here and they will be sourced in
-# the script and applied to all pass commands called. Like:
-# PASSWORD_STORE_CLIP_TIME=30
-# PASSWORD_STORE_GENERATED_LENGTH=13
+# You can define gopass env vars here and they will be sourced in
+# the script and applied to all gopass commands called. Like:
+# GOPASS_CLIP_TIME=30
+# GOPASS_GENERATED_LENGTH=13
 
-# Same way you can define other env vars that pass is using:
+# Same way you can define other env vars that gopass is using:
 # EDITOR='vim -x'
 # BROWSER= # default: xdg-open
 
-# Fields to be used
+# Fields to be used (space-separated for USERNAME_FIELD to support multiple aliases)
 URL_FIELD='url'
-USERNAME_FIELD='user'
+USERNAME_FIELD='user username'
 AUTOTYPE_FIELD='autotype'
 
 BACK_OPTION='← back'
 
 # delay to be used for :delay keyword
 delay=2
-# rofi-pass needs to close itself before it can type passwords. Set delay here.
+# rofi-gopass needs to close itself before it can type passwords. Set delay here.
 wait=0.2
 # delay between keypresses when typing (in ms)
 type_delay=12
@@ -73,12 +73,12 @@ kb_switch_root="Alt+bracketright" # ]
 
 _rofi() { rofi -no-auto-select -i -dmenu "$@"; }
 
-_notify() { notify-send -e "rofi-pass" "$1"; }
+_notify() { notify-send -e "rofi-gopass" "$1"; }
 
 _store_changed_hook() {
-	pass git pull --rebase && pass git push
+	gopass git pull --rebase && gopass git push
 }
 
-_generate_pass() { pass generate --clip --in-place "$@" > /dev/null; }
+_generate_pass() { gopass generate --clip --in-place "$@" > /dev/null; }
 
-_get_otp() { pass otp "$@"; }
+_get_otp() { gopass otp "$@"; }

@@ -1,5 +1,5 @@
 DESTDIR :=
-PKGNAME := rofi-pass
+PKGNAME := rofi-gopass
 PREFIX := /usr/local
 
 .PHONY: install

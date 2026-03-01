@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-# rofi-pass
+# rofi-gopass
 # (c) 2015 Rasmus Steinke <rasi@xssn.at>
 # Maintained by seme4eg <418@duck.com> since 2024
 
@@ -12,25 +12,25 @@
 # Can be switched at runtime with with corresponding hotkeys
 # ROOTS=/path/to/root_one:/path/to/root_two
 
-# You can define password store env vars here and they will be sourced in
-# the script and applied to all pass commands called. Like:
-# PASSWORD_STORE_CLIP_TIME=30
-# PASSWORD_STORE_GENERATED_LENGTH=13
+# You can define gopass env vars here and they will be sourced in
+# the script and applied to all gopass commands called. Like:
+# GOPASS_CLIP_TIME=30
+# GOPASS_GENERATED_LENGTH=13
 
-# Same way you can define other env vars that pass is using:
+# Same way you can define other env vars that gopass is using:
 # EDITOR='vim -x'
 # BROWSER= # default: xdg-open
 
 # Fields to be used
 URL_FIELD='url'
-USERNAME_FIELD='user'
+USERNAME_FIELD='user username'
 AUTOTYPE_FIELD='autotype'
 
 BACK_OPTION='← back'
 
 # delay to be used for :delay keyword
 delay=2
-# rofi-pass needs to close itself before it can type passwords. Set delay here.
+# rofi-gopass needs to close itself before it can type passwords. Set delay here.
 wait=0.2
 # delay between keypresses when typing (in ms)
 type_delay=12
@@ -81,7 +81,7 @@ kb_switch_root="Alt+bracketleft" # [
 
 _rofi() { rofi -no-auto-select -i -dmenu "$@"; }
 
-_notify() { notify-send -e "rofi-pass" "$1"; }
+_notify() { notify-send -e "rofi-gopass" "$1"; }
 
 # Function that runs on successful password store change.
 # I personally use it for syncing my pass to other machines.
@@ -90,9 +90,16 @@ _store_changed_hook() {
 	:
 }
 
-_generate_pass() { pass generate --clip --in-place "$@" >/dev/null; }
+_generate_pass() { gopass generate --clip --in-place "$@" >/dev/null; }
 
-_get_otp() { pass otp "$@"; }
+_get_otp() {
+	if [ "$1" = "-c" ]; then
+		shift
+		gopass otp "$@" | wl-copy
+	else
+		gopass otp "$@"
+	fi
+}
 
 ###############################################################################
 #                               Action functions                              #
@@ -129,11 +136,11 @@ main_menu() {
 	)
 
 	local placeholder
-	placeholder=$(wrap_placeholder "Current store: $PASSWORD_STORE_DIR")
+	placeholder=$(wrap_placeholder "Current store: ${GOPASS_DIR:-$PASSWORD_STORE_DIR}")
 	args+=(-theme-str "$placeholder")
 
 	local passentry
-	passentry="$(passls | _rofi "${args[@]}")"
+	passentry="$(gopassls | _rofi "${args[@]}")"
 
 	rofi_exit=$?
 
@@ -148,7 +155,7 @@ main_menu() {
 		28) # next root
 			roots_length=${#roots[@]}
 			root_index=$(((root_index - 1 + roots_length) % roots_length))
-			PASSWORD_STORE_DIR=${roots[$root_index]}
+			GOPASS_DIR=${roots[$root_index]:-$PASSWORD_STORE_DIR}
 			main_menu
 			return
 			;;
@@ -163,13 +170,13 @@ main_menu() {
 		0) entry_menu "$passentry" ;;
 		11) _type "$passentry" menu ;;
 		12) _type "$passentry" pass ;;
-		13) _type "$passentry" "$USERNAME_FIELD" ;;
+		13) _type "$passentry" user ;;
 		14) _type "$passentry" OTP ;;
 		15) _type "$passentry" "$AUTOTYPE_FIELD" ;;
 
 		16) _copy menu "$passentry" ;;
 		17) _copy pass "$passentry" ;;
-		18) _copy $USERNAME_FIELD "$passentry" ;;
+		18) _copy user "$passentry" ;;
 		19) _copy OTP "$passentry" ;;
 
 		20) insert_entry ;;
@@ -218,7 +225,7 @@ entry_menu() {
 		-kb-custom-7 "$kb_generate"
 	)
 
-	if pass "$passentry" | grep "${URL_FIELD}: "; then
+	if gopass "$passentry" | grep "${URL_FIELD}: "; then
 		actions+=("$browse")
 		args+=(-kb-custom-8 "$kb_browse_url")
 	fi
@@ -310,7 +317,7 @@ _type() {
 
 			_type "$passentry" "$field"
 			;;
-		"$USERNAME_FIELD") printf '%s' "${fields_map[${USERNAME_FIELD}]}" | _wtype ;;
+		"user") printf '%s' "$(get_username)" | _wtype ;;
 		pass) printf '%s' "${fields_map[pass]}" | _wtype ;;
 		OTP) printf '%s' "$(_get_otp "$passentry")" | _wtype ;;
 		"$AUTOTYPE_FIELD") autotype ;;
@@ -337,9 +344,11 @@ _copy() {
 			_copy "$field" "$passentry"
 			;;
 		pass)
-			pass -c "$passentry"
-			notify_w "Copied $field field\n_clearing in ${PASSWORD_STORE_CLIP_TIME:-45} seconds"
+			gopass show -c "$passentry"
+			notify_w "Copied $field field\n_clearing in ${GOPASS_CLIP_TIME:-45} seconds"
 			;;
+		user) printf '%s' "$(get_username)" | wl-copy &&
+			notify_w "Copied username field" ;;
 		OTP) _get_otp -c "$passentry" ;;
 		*) printf '%s' "${fields_map[$field]}" | wl-copy &&
 			notify_w "Copied $field field" ;;
@@ -348,12 +357,12 @@ _copy() {
 
 move_entry() {
 	placeholder=$(wrap_placeholder "New path for $1")
-	path=$(passls | _rofi -format 'f' -theme-str "$placeholder")
+	path=$(gopassls | _rofi -format 'f' -theme-str "$placeholder")
 	assert_status $?
-	echo "PASSWORD_STORE_DIR=${roots[$root_index]} pass mv -f $1 $path"
+	echo "GOPASS_DIR=${roots[$root_index]} gopass mv -f $1 $path"
 
 	notify_w "Moving $1 to $path ..."
-	if pass mv "$1" "$path"; then
+	if gopass mv "$1" "$path"; then
 		notify_w "Successfully moved $1 to $path"
 		(_store_changed_hook) &
 	else
@@ -364,11 +373,11 @@ move_entry() {
 copy_entry() {
 	local placeholder
 	placeholder=$(wrap_placeholder "Path for $1 copy")
-	path=$(passls | _rofi -theme-str "$placeholder")
+	path=$(gopassls | _rofi -theme-str "$placeholder")
 	assert_status $?
 
 	notify_w "Copying $1 to $path ..."
-	if pass cp "$1" "$path"; then
+	if gopass cp "$1" "$path"; then
 		notify_w "Successfully copied $1 to $path"
 	else
 		notify_w "Failed copying $1 to $path"
@@ -385,10 +394,10 @@ remove_entry() {
 	case $ask in
 		"yes")
 			notify_w "Deleting $1 ..."
-			# need subshell in case some people have post-commit hook setup in pass
+			# need subshell in case some people have post-commit hook setup in gopass
 			# to not wait for it to finish
 			(
-				if pass rm --force "$1"; then
+				if gopass rm --force "$1"; then
 					notify_w "Successfully deleted $1"
 					(_store_changed_hook) &
 				else
@@ -402,7 +411,7 @@ remove_entry() {
 
 edit_entry() {
 	notify_w "Updating $1 ..."
-	if pass edit "${1}"; then
+	if gopass edit "${1}"; then
 		notify_w "Successfully updated $1"
 		(_store_changed_hook) &
 	else
@@ -415,7 +424,7 @@ generate_pass() {
 	# pass anything as 2nd arg to suppress all notifications of this func
 	local silent="$2"
 
-	placeholder=$(wrap_placeholder "Password length (leave empty for pass default):")
+	placeholder=$(wrap_placeholder "Password length (leave empty for gopass default):")
 	length=$(printf '%s' "" | _rofi -theme-str "$placeholder")
 	# don't 'exit' in this function since there are some cleanups than need to be
 	# done if this function fails
@@ -477,10 +486,10 @@ insert_entry() {
 	fi
 
 	# needs to be checked here since this f-n may be called directly from 'main'
-	cd "$PASSWORD_STORE_DIR" || exit
+	cd "${GOPASS_DIR:-$PASSWORD_STORE_DIR}" || exit
 
 	placeholder=$(wrap_placeholder "Enter name, must be unique ...")
-	path=$(passls | _rofi "${rofi_args[@]}")
+	path=$(gopassls | _rofi "${rofi_args[@]}")
 	assert_status $?
 
 	if [ -z "$path" ]; then
@@ -517,25 +526,25 @@ insert_entry() {
 	pw=$(printf '%s' "Generate" | _rofi -password -theme-str "$placeholder")
 	assert_status $?
 
-	pass_content=("${pw}" "${USERNAME_FIELD}: ${user}" "${additional_content[@]}")
+	pass_content=("${pw}" "$(echo $USERNAME_FIELD | awk '{print $1}'): ${user}" "${additional_content[@]}")
 
 	notify_w "Creating password entry $path ..."
-	printf '%s\n' "${pass_content[@]}" | pass insert -m "${path}" >/dev/null &
+	printf '%s\n' "${pass_content[@]}" | gopass insert -m "${path}" >/dev/null &
 
 	if [ $? == 0 ]; then
 		if [[ $pw == "Generate" ]]; then
 			if ! generate_pass "$path" silent; then
 				# remove created entry on failure in generating
-				pass rm --force "$path" &
+				gopass rm --force "$path" &
 				notify_w "Interrupted, no password entry was created"
 				exit
 			fi
 		fi
-		[[ $edit_new_pass == "true" ]] && pass edit "${path}"
+		[[ $edit_new_pass == "true" ]] && gopass edit "${path}"
 		notify_w "Password entry $path successfully inserted"
 		(_store_changed_hook) &
 	else
-		notify_w "Failed to insert new password entry $path. Is password store initialized?"
+		notify_w "Failed to insert new password entry $path. Is gopass store initialized?"
 	fi
 }
 
@@ -543,7 +552,7 @@ insert_entry() {
 # dunno, maybe thing ain't needed at all
 browse_url() {
 	local passentry="$1"
-	url=$(pass "$passentry" | grep "${URL_FIELD}: " | cut -d' ' -f 2)
+	url=$(gopass "$passentry" | grep "${URL_FIELD}: " | cut -d' ' -f 2)
 	if [ -z "$url" ]; then
 		printf '%s\n' "No $URL_FIELD field in $passentry" | _rofi
 		assert_status $?
@@ -562,7 +571,7 @@ generate_qr() {
 		main_menu
 	fi
 
-	pass "$passentry" | head -n 1 |
+	gopass "$passentry" | head -n 1 |
 		qrencode -t png -o "$qrcode_path" -l H -s 25 -m 2 --dpi=192 -v 8
 
 	_rofi -theme-str "
@@ -599,7 +608,7 @@ help_menu() {
 		---
 		${kb_browse_url}: Browse URL
 		${kb_qrcode}: Generate and display qrcode
-		${kb_switch_root}: Switch password store root
+		${kb_switch_root}: Switch gopass store root
 	EOM
 
 	assert_status $?
@@ -624,7 +633,7 @@ populate_fields_map() {
 	local passentry="$1"
 
 	# check if user propmt exists in the store
-	output=$(pass show "$passentry" 2>&1)
+	output=$(gopass show "$passentry" 2>&1)
 	[ "$?" -eq 1 ] && notify_w "$output" && exit
 
 	# get an array of password file fields like url: user: and custom ones
@@ -658,11 +667,15 @@ populate_fields_map() {
 		done < <(printf '%s\n' "$fields")
 	fi
 
-	if [[ -z "${fields_map["${USERNAME_FIELD}"]}" && -n $default_user ]]; then
+	if [[ -z "$(get_username)" && -n $default_user ]]; then
 		if [[ "$default_user" == ":basename" ]]; then
-			fields_map["${USERNAME_FIELD}"]="$(basename "$passentry")"
+			for field in $USERNAME_FIELD; do
+				fields_map["$field"]="$(basename "$passentry")"
+			done
 		else
-			fields_map["${USERNAME_FIELD}"]="${default_user}"
+			for field in $USERNAME_FIELD; do
+				fields_map["$field"]="${default_user}"
+			done
 		fi
 	fi
 
@@ -674,9 +687,18 @@ is_valid_url() {
 	[[ $1 =~ $url_regex ]]
 }
 
+get_username() {
+	for field in $USERNAME_FIELD; do
+		if [[ -n "${fields_map[$field]}" ]]; then
+			echo "${fields_map[$field]}"
+			return
+		fi
+	done
+}
+
 # get all password files and output as newline-delimited text
-passls() {
-	cd "$PASSWORD_STORE_DIR" || return 1
+gopassls() {
+	cd "${GOPASS_DIR:-$PASSWORD_STORE_DIR}" || return 1
 
 	mapfile -d '' pw_list < <(find -L . -name '*.gpg' -print0)
 	pw_list=("${pw_list[@]#./}")
@@ -693,6 +715,14 @@ get_sorted_fields() {
 	local -a keys=("${!fields_map[@]}")
 	# remove autotype field from keys array
 	keys=("${keys[@]/$AUTOTYPE_FIELD/}")
+	# remove all username field aliases except the first one
+	local first_user_field
+	first_user_field=$(echo $USERNAME_FIELD | awk '{print $1}')
+	for field in $USERNAME_FIELD; do
+		if [[ "$field" != "$first_user_field" ]]; then
+			keys=("${keys[@]/$field/}")
+		fi
+	done
 	# grep out empty strings cuz command above doesn't update indecies
 	printf '%s\n' "${keys[@]}" | sort | grep -v "^$"
 }
@@ -700,10 +730,10 @@ get_sorted_fields() {
 help_msg() {
 	cat <<'EOF'
 	Usage:
-	rofi-pass [command]
+	rofi-gopass [command]
 
 	Commands:
-	--insert         insert new entry to password store
+	--insert         insert new entry to gopass store
 	--roots          set custom root directories (colon separated)
 EOF
 }
@@ -716,13 +746,13 @@ EOF
 load_config() {
 	local config_dir=${XDG_CONFIG_HOME:-$HOME/.config}
 	local -a configs=(
-		"$ROFI_PASS_CONFIG"
-		"$config_dir/rofi-pass/config"
-		"/etc/rofi-pass.conf"
+		"$ROFI_GOPASS_CONFIG"
+		"$config_dir/rofi-gopass/config"
+		"/etc/rofi-gopass.conf"
 	)
 
 	for config in "${configs[@]}"; do
-		# '-n' is needed in case ROFI_PASS_CONFIG is not set
+		# '-n' is needed in case ROFI_GOPASS_CONFIG is not set
 		if [[ -n "$config" && -f "$config" ]]; then
 			source "$config"
 			return
@@ -733,11 +763,13 @@ load_config() {
 populate_roots() {
 	local IFS=:
 
-	# Precedense: flag -> config -> pass DIR var -> default $HOME/.password-store
+	# Precedense: flag -> config -> gopass/pass DIR var -> default $HOME/.password-store
 	if [[ "$1" == "--root" && -n "$2" ]]; then
 		read -r -a roots <<<"$2"
 	elif [[ -n "$ROOTS" ]]; then # config var
 		read -r -a roots <<<"$ROOTS"
+	elif [[ -n $GOPASS_DIR ]]; then
+		roots=("$GOPASS_DIR")
 	elif [[ -n $PASSWORD_STORE_DIR ]]; then
 		roots=("$PASSWORD_STORE_DIR")
 	else
@@ -756,7 +788,7 @@ main() {
 	declare -a roots
 	declare root_index=0
 	populate_roots "$@"
-	PASSWORD_STORE_DIR=${roots[$root_index]}
+	GOPASS_DIR=${roots[$root_index]:-$PASSWORD_STORE_DIR}
 
 	case $1 in
 		--insert) insert_entry ;;
