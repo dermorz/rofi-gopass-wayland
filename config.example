@@ -36,6 +36,45 @@ default_user="$(whoami)"
 # Space separated.
 users_list="some@mail.com another@gmail.com localuser"
 
+# Password generator settings (gopass generate options)
+# Generator type: cryptic (default), memorable, xkcd, or external
+# Example: generator="xkcd"
+# generator="cryptic"     # e.g., "Eech4ahRoy2oowi0ohl" (random chars)
+# generator="memorable"   # e.g., "puma-nag2-scout-chute-emu" (readable words)
+# generator="xkcd"       # e.g., "correct-horse-battery-staple" (passphrase style)
+
+# Password length (for cryptic generator)
+# Default: 20
+# gen_length="20"
+
+# Include symbols in password (for cryptic generator)
+# Default: true
+# gen_symbols="true"
+
+# Number of words (for xkcd/memorable generators)
+# Default: 6
+# gen_word_count="6"
+
+# Word separator (for xkcd/memorable generators)
+# Default: -
+# gen_separator="-"
+
+# Language for xkcd/memorable word lists (e.g., en, de, fr, es, etc.)
+# Default: en
+# gen_lang="en"
+
+# Capitalize words (for xkcd/memorable generators)
+# Default: true
+# gen_capitalize="true"
+
+# Include number (for xkcd/memorable generators)
+# Default: true
+# gen_number="true"
+
+# Include symbol (for xkcd/memorable generators)
+# Default: true
+# gen_symbol="true"
+
 ## Misc settings
 
 default_autotype="user :tab pass"

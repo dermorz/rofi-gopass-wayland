@@ -44,6 +44,26 @@ default_user="$(whoami)"
 # Space separated.
 users_list=""
 
+# Password generator settings (gopass generate options)
+# Generator type: cryptic (default), memorable, xkcd, or external
+generator="cryptic"
+# Password length (for cryptic generator)
+gen_length="20"
+# Include symbols in password (for cryptic generator)
+gen_symbols="true"
+# Number of words (for xkcd/memorable generators)
+gen_word_count="6"
+# Word separator (for xkcd/memorable generators)
+gen_separator="-"
+# Language for xkcd/memorable word lists
+gen_lang="en"
+# Capitalize words (for xkcd/memorable generators)
+gen_capitalize="true"
+# Include number (for xkcd/memorable generators)
+gen_number="true"
+# Include symbol (for xkcd/memorable generators)
+gen_symbol="true"
+
 ## Misc settings
 
 default_autotype="user :tab pass"
@@ -421,26 +441,44 @@ edit_entry() {
 
 generate_pass() {
 	local passentry="$1"
-	# pass anything as 2nd arg to suppress all notifications of this func
 	local silent="$2"
 
-	placeholder=$(wrap_placeholder "Password length (leave empty for gopass default):")
-	length=$(printf '%s' "" | _rofi -theme-str "$placeholder")
-	# don't 'exit' in this function since there are some cleanups than need to be
-	# done if this function fails
-	[ "$?" -eq 1 ] && return 1
-
-	placeholder=$(wrap_placeholder "Use symbols?")
-	yesno=("yes" "no")
-	usesymbols=$(printf '%s\n' "${yesno[@]}" | _rofi -theme-str "$placeholder")
-	[ "$?" -eq 1 ] && return 1
-
-	# compose args for generate command
 	local -a args
-	[ "$usesymbols" == "no" ] && args+=("-n")
+
+	case "$generator" in
+		xkcd|memorable)
+			placeholder=$(wrap_placeholder "Number of words (default: ${gen_word_count}):")
+			length=$(printf '%s' "" | _rofi -theme-str "$placeholder")
+			[ "$?" -eq 1 ] && return 1
+			[ -z "$length" ] && length="$gen_word_count"
+
+			args+=("--generator" "$generator")
+			args+=("--length" "$length")
+			[ -n "$gen_lang" ] && args+=("--lang" "$gen_lang")
+			[ -n "$gen_separator" ] && args+=("--sep" "$gen_separator")
+			[ "$gen_capitalize" != "true" ] && args+=("--no-capitalize")
+			[ "$gen_number" != "true" ] && args+=("--no-number")
+			[ "$gen_symbol" != "true" ] && args+=("--no-symbol")
+			;;
+		*)
+			placeholder=$(wrap_placeholder "Password length (default: ${gen_length}):")
+			length=$(printf '%s' "" | _rofi -theme-str "$placeholder")
+			[ "$?" -eq 1 ] && return 1
+			[ -z "$length" ] && length="$gen_length"
+
+			placeholder=$(wrap_placeholder "Use symbols? (default: ${gen_symbols}):")
+			yesno=("yes" "no")
+			usesymbols=$(printf '%s\n' "${yesno[@]}" | _rofi -theme-str "$placeholder")
+			[ "$?" -eq 1 ] && return 1
+
+			[ -z "$usesymbols" ] && usesymbols="$gen_symbols"
+			[ "$usesymbols" == "no" ] && args+=("-n")
+			;;
+	esac
+
 	args+=("$passentry" "$length")
 
-	[ -z "$silent" ] && notify_w "Generating passwrod for $passentry ..."
+	[ -z "$silent" ] && notify_w "Generating password for $passentry ..."
 
 	if _generate_pass "${args[@]}"; then
 		if [ -z "$silent" ]; then
