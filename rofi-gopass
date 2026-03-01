@@ -457,8 +457,7 @@ generate_pass() {
 			[ -n "$gen_lang" ] && args+=("--lang" "$gen_lang")
 			[ -n "$gen_separator" ] && args+=("--sep" "$gen_separator")
 			[ "$gen_capitalize" != "true" ] && args+=("--no-capitalize")
-			[ "$gen_number" != "true" ] && args+=("--no-number")
-			[ "$gen_symbol" != "true" ] && args+=("--no-symbol")
+			[ "$gen_number" != "true" ] && args+=("--no-numerals")
 			;;
 		*)
 			placeholder=$(wrap_placeholder "Password length (default: ${gen_length}):")

@@ -66,9 +66,9 @@ users_list="some@mail.com another@gmail.com localuser"
 #           "_"   -> "correct_horse_battery_staple"
 # gen_separator="-"
 
-# Language for xkcd/memorable word lists (e.g., en, de, fr, es, etc.)
+# Language for xkcd/memorable word lists (only en or de supported by gopass)
 # Default: en
-# Examples: en, de, fr, es, it, nl, pt, ru, sv, zh
+# Examples: en, de
 # gen_lang="en"
 
 # Capitalize words (for xkcd/memorable generators)
@@ -78,15 +78,15 @@ users_list="some@mail.com another@gmail.com localuser"
 # gen_capitalize="true"
 
 # Include number (for xkcd/memorable generators)
-# Default: true
+# Note: gopass uses --no-numerals flag (enabled = no numbers)
+# Default: true (numbers included)
 # Examples: true  -> "correct-horse-battery-staple-42"
 #           false -> "correct-horse-battery-staple"
 # gen_number="true"
 
 # Include symbol (for xkcd/memorable generators)
-# Default: true
-# Examples: true  -> "correct-horse-battery-staple!"
-#           false -> "correct-horse-battery-staple"
+# Note: gopass doesn't have a separate --no-symbol for xkcd, 
+# symbols are only controlled via the main --symbols/-s flag
 # gen_symbol="true"
 
 ## Misc settings
