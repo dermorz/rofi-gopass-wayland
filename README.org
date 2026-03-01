@@ -8,10 +8,6 @@ A [[https://github.com/lbonn/rofi][rofi-wayland]] frontend for [[https://github.
 Main goal - provide frontend for gopass, while keeping it a small, readable
 single-file script.
 
-Password entry submenu:
-
-[[./assets/submenu.png]]
-
 _Features_:
 - Create / Read / Update / Delete / move / copy password store entries
 - Generate new passwords for entries
