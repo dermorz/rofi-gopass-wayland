@@ -454,7 +454,7 @@ edit_entry() {
 		fi
 
 		notify_w "Opening editor..."
-		$term -e "$EDITOR" gopass edit "${1}" &
+		$term -e gopass edit "${1}" &
 		
 		if command -v swaymsg &>/dev/null; then
 			sleep 0.3
@@ -611,7 +611,7 @@ insert_entry() {
 				if [[ -z "$term" ]]; then
 					notify_w "No terminal found. Set terminal_editor in config."
 				else
-					$term -e "$EDITOR" gopass edit "${path}" &
+					$term -e gopass edit "${path}" &
 					if command -v swaymsg &>/dev/null; then
 						sleep 0.3
 						swaymsg floating enable, center 2>/dev/null
