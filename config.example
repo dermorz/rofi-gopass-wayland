@@ -71,6 +71,15 @@ users_list="some@mail.com another@gmail.com localuser"
 # Default: true
 # gen_number="true"
 
+# Terminal to use when running from rofi (auto-detected if empty)
+# Auto-detected in order: alacritty, foot, kitty, wezterm, gnome-terminal, konsole, xterm
+# Examples: alacritty, foot, kitty, wezterm, gnome-terminal, konsole
+# terminal_editor=""
+
+# Set to "true" if using a GUI editor that needs a terminal anyway
+# Default: false
+# gui_editor="false"
+
 ## Misc settings
 
 default_autotype="user :tab pass"

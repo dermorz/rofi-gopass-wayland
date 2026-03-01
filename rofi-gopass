@@ -62,6 +62,13 @@ gen_capitalize="true"
 # Include number (for xkcd/memorable generators)
 gen_number="true"
 
+# Terminal to use when running from rofi (auto-detected if empty)
+# Examples: alacritty, foot, kitty, wezterm, gnome-terminal, konsole
+terminal_editor=""
+
+# Set to "true" if using a GUI editor that needs a terminal
+gui_editor="false"
+
 ## Misc settings
 
 default_autotype="user :tab pass"
@@ -431,11 +438,31 @@ remove_entry() {
 
 edit_entry() {
 	notify_w "Updating $1 ..."
-	if gopass edit "${1}"; then
+	if [ -t 0 ]; then
+		if gopass edit "${1}"; then
+			notify_w "Successfully updated $1"
+			(_store_changed_hook) &
+		else
+			notify_w "Failed to update $1"
+		fi
+	else
+		local term
+		term=$(detect_terminal)
+		if [[ -z "$term" ]]; then
+			notify_w "No terminal found. Set terminal_editor in config."
+			return 1
+		fi
+
+		notify_w "Opening editor..."
+		$term -e "$EDITOR" gopass edit "${1}" &
+		
+		if command -v swaymsg &>/dev/null; then
+			sleep 0.3
+			swaymsg floating enable, center 2>/dev/null
+		fi
+		
 		notify_w "Successfully updated $1"
 		(_store_changed_hook) &
-	else
-		notify_w "Failed to update $1"
 	fi
 }
 
@@ -574,7 +601,24 @@ insert_entry() {
 				exit
 			fi
 		fi
-		[[ $edit_new_pass == "true" ]] && gopass edit "${path}"
+		
+		if [[ $edit_new_pass == "true" ]]; then
+			if [ -t 0 ]; then
+				gopass edit "${path}"
+			else
+				local term
+				term=$(detect_terminal)
+				if [[ -z "$term" ]]; then
+					notify_w "No terminal found. Set terminal_editor in config."
+				else
+					$term -e "$EDITOR" gopass edit "${path}" &
+					if command -v swaymsg &>/dev/null; then
+						sleep 0.3
+						swaymsg floating enable, center 2>/dev/null
+					fi
+				fi
+			fi
+		fi
 		notify_w "Password entry $path successfully inserted"
 		(_store_changed_hook) &
 	else
@@ -734,6 +778,20 @@ get_username() {
 gopassls() {
 	gopass ls --flat 2>/dev/null | grep -v '^$' | sort
 	return 0
+}
+
+detect_terminal() {
+	if [[ -n "$terminal_editor" ]]; then
+		echo "$terminal_editor"
+		return
+	fi
+
+	for term in alacritty foot kitty wezterm gnome-terminal konsole xterm; do
+		if command -v "$term" &>/dev/null; then
+			echo "$term"
+			return
+		fi
+	done
 }
 
 # FIXME: how to move the '-theme-str' part in this funciton
