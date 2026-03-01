@@ -100,7 +100,7 @@ kb_generate="Alt+I"
 
 kb_browse_url="Alt+U"
 kb_qrcode="Alt+q"
-kb_switch_root="Alt+S"
+kb_switch_root="Alt+r"
 
 # --- Customisable functions ---
 
