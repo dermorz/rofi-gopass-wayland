@@ -6,10 +6,10 @@ PREFIX := /usr/local
 install:
 	install -Dm755 ${PKGNAME} $(DESTDIR)$(PREFIX)/bin/${PKGNAME}
 	install -Dm644 config.example $(DESTDIR)$(PREFIX)/share/${PKGNAME}/config.example
-	install -Dm644 README.org $(DESTDIR)$(PREFIX)/share/doc/${PKGNAME}/README.org
+	install -Dm644 README.md $(DESTDIR)$(PREFIX)/share/doc/${PKGNAME}/README.md
 
 .PHONY: uninstall
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/${PKGNAME}
 	rm -f $(DESTDIR)$(PREFIX)/share/${PKGNAME}/config.example
-	rm -f $(DESTDIR)$(PREFIX)/share/doc/${PKGNAME}/README.org
+	rm -f $(DESTDIR)$(PREFIX)/share/doc/${PKGNAME}/README.md
