@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+declare -A fields_map
+
 # rofi-gopass
 # (c) 2015 Rasmus Steinke <rasi@xssn.at>
 # Maintained by seme4eg <418@duck.com> since 2024
@@ -23,7 +25,7 @@
 
 # Fields to be used
 URL_FIELD='url'
-USERNAME_FIELD='user username'
+USERNAME_FIELD='user username User Username'
 AUTOTYPE_FIELD='autotype'
 
 BACK_OPTION='← back'
@@ -188,7 +190,6 @@ main_menu() {
 			;;
 	esac
 
-	declare -A fields_map
 	populate_fields_map "$passentry"
 
 	# Actions that do need the entry
